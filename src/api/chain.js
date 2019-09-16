@@ -18,7 +18,7 @@ const init = async (wsp) => {
 
   api = await ApiPromise.create({
     types: {
-      ContentHash: "[u8; 32]",
+      ContentHash: "u256",
       NodeType: "u32",
       Node: {
         id: "ContentHash",
@@ -153,6 +153,59 @@ const connect = async () => {
   return { chain, name, version };
 };
 
+const getTcxListingsCount = async (tcxId) => {
+  if (!api) {
+    await init();
+  }
+  let count = await api.query.tcx.tcxListingsCount(tcxId);
+  console.log(count.toString());
+  return count;
+}
+
+const getTcxListingsIndexHash = async(tcxId, listingIndex) => {
+  if (!api) {
+    await init();
+  }
+  console.log(api.query.tcx)
+  let nodeId = await api.query.tcx.tcxListingsIndexHash([1, 1]);
+  console.log(nodeId.toString());
+  return nodeId;
+}
+
+const getTcxListing = async (tcxId, nodeId) => {
+  if (!api) {
+    await init();
+  }
+  let listing = await api.query.tcx.tcxListings([tcxId, nodeId]);
+  // console.log(listing);
+  return listing;
+}
+
+const getListings = async (tcxId) => {
+  if(!api) {
+    await init();
+  }
+  let listingCount = await getTcxListingsCount(tcxId);
+  let listings = [];
+  for(let i=1;i<=listingCount;i++) {
+    let nodeId = await getTcxListingsIndexHash(tcxId, i);
+    let node = await getTcxListing(tcxId, nodeId);
+    listings.push(node);
+  }
+  return listings;
+}
+
+const getNode = async (nodeId) => {
+  if (!api) {
+    await init();
+  }
+
+  let node = await api.query.node.nodes(nodeId);
+  console.log(node);
+  return node;
+  
+}
+
 
 export default {
   init,
@@ -163,4 +216,6 @@ export default {
   getKeysFromUri,
   // ------- tcr
   connect,
+  getListings,
+  getNode,
 };
