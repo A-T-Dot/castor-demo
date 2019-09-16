@@ -177,7 +177,6 @@ const getTcxListing = async (tcxId, nodeId) => {
     await init();
   }
   let listing = await api.query.tcx.tcxListings([tcxId, nodeId]);
-  // console.log(listing);
   return listing;
 }
 
@@ -190,8 +189,7 @@ const getListings = async (tcxId) => {
   for(let i=1;i<=listingCount;i++) {
     let nodeId = await getTcxListingsIndexHash(tcxId, i);
     let listing = await getTcxListing(tcxId, nodeId);
-    console.log(listing);
-    console.log(listing.whitelisted);
+
     if (listing.whitelisted.isTrue) {
       let node = await getNode(nodeId);
       listings.push(node.unwrap());
