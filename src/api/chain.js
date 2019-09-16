@@ -9,8 +9,12 @@ let api = null;
 // https://polkadot.js.org/api/api/#registering-custom-types
 // https://github.com/substrate-developer-hub/substrate-tcr-ui/blob/master/src/services/tcrService.js
 
-const init = async (wsp, callback) => {
+const init = async (wsp) => {
   const provider = new WsProvider(wsp);
+  if(api) {
+    console.log("api initialized already");
+    return;
+  }
 
   api = await ApiPromise.create({
     types: {
@@ -70,25 +74,33 @@ const init = async (wsp, callback) => {
   // api.rpc.chain.subscribeNewHeads(header => {
   //   console.log(`Chain is at #${header.number}`)
   // });
-
-  callback(api);
+  
 };
 
-const getBalance = async (address, callback) => {
+const getBalance = async (address) => {
+  if(!api) {
+    await init();
+  }
   const currentBalance = await api.query.balances.freeBalance(address);
-  callback(currentBalance.toString());
+  return currentBalance.toString();
 };
 
-const getBalances = async (addresses, callback) => {
+const getBalances = async (addresses) => {
+  if (!api) {
+    await init();
+  }
   const currentBalances = await api.query.balances.freeBalance.multi(addresses);
   const balancesMap = {};
   currentBalances.forEach((item, index) => {
     balancesMap[addresses[index]] = item.toString();
   });
-  callback(balancesMap);
+  return balancesMap;
 };
 
 const transfer = async (keyring, addressFrom, addressTo, amount) => {
+  if (!api) {
+    await init();
+  }
   const fromPair = keyring.getPair(addressFrom);
   api.tx.balances
     .transfer(addressTo, amount)
@@ -127,6 +139,9 @@ const getKeysFromUri = uri => {
 };
 
 const connect = async () => {
+  if (!api) {
+    await init();
+  }
   const [chain, name, version] = await Promise.all([
     api.rpc.system.chain(),
     api.rpc.system.name(),
