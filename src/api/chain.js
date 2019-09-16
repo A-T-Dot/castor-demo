@@ -18,7 +18,7 @@ const init = async (wsp) => {
 
   api = await ApiPromise.create({
     types: {
-      ContentHash: "u256",
+      ContentHash: "[u8; 32]",
       NodeType: "u32",
       Node: {
         id: "ContentHash",
@@ -167,7 +167,7 @@ const getTcxListingsIndexHash = async(tcxId, listingIndex) => {
     await init();
   }
   console.log(api.query.tcx)
-  let nodeId = await api.query.tcx.tcxListingsIndexHash([1, 1]);
+  let nodeId = await api.query.tcx.tcxListingsIndexHash([tcxId, listingIndex]);
   console.log(nodeId.toString());
   return nodeId;
 }
@@ -189,8 +189,13 @@ const getListings = async (tcxId) => {
   let listings = [];
   for(let i=1;i<=listingCount;i++) {
     let nodeId = await getTcxListingsIndexHash(tcxId, i);
-    let node = await getTcxListing(tcxId, nodeId);
-    listings.push(node);
+    let listing = await getTcxListing(tcxId, nodeId);
+    console.log(listing);
+    console.log(listing.whitelisted);
+    if (listing.whitelisted.isTrue) {
+      let node = await getNode(nodeId);
+      listings.push(node.unwrap());
+    }
   }
   return listings;
 }
@@ -201,8 +206,10 @@ const getNode = async (nodeId) => {
   }
 
   let node = await api.query.node.nodes(nodeId);
-  console.log(node);
-  return node;
+  if(node.isNone) {
+    return null;
+  }
+  return node.unwrap();
   
 }
 
